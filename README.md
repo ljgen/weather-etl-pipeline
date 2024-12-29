@@ -71,9 +71,9 @@ The transformed weather data will be stored in the MySQL database. You can conne
 ├── dags/                              # Airflow DAGs and tasks
 │   └── weather_etl.py                 # ETL processing logic
 │   └── weather_etl_airflow_task.py    # Airflow task definitions
-├── docker-compose.yml                 # Docker Compose configuration file
-└── README.md                          # Project documentation
-├── requirements.txt                   # Python dependencies
 ├── script/                            
 │   └── entrypoint.sh                  # Sets up the container on start.
+└── README.md                          # Project documentation
+├── docker-compose.yml                 # Docker Compose configuration file
+├── requirements.txt                   # Python dependencies
 ```
