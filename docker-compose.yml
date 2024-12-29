@@ -1,0 +1,86 @@
+services:
+  webserver:
+    image: apache/airflow:latest
+    hostname: webserver
+    command: ["airflow", "webserver"]
+    entrypoint: ['/opt/airflow/script/entrypoint.sh']
+    depends_on:
+      - postgres
+      - mysql
+    ports:
+      - "8080:8080"    
+    environment:
+      LOAD_EX: "n"
+      EXECUTOR: Sequential
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW_CONN_MYSQL_CONN: mysql://db_mysql:db_mysql@mysql:3306/db_weather
+      AIRFLOW__WEBSERVER__SECRET_KEY: this_is_webserver_secret_key
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
+      - ./requirements.txt:/opt/airflow/requirements.txt
+    healthcheck:
+      test: ['CMD-SHELL', "[ -f /opt/airflow/airflow-webserver.pid ]"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - project_network
+
+  scheduler:
+    image: apache/airflow:latest
+    hostname: scheduler
+    command: bash -c "pip install -r ./requirements.txt && airflow db upgrade && airflow scheduler"    
+    depends_on:
+      webserver:
+          condition: service_healthy
+    environment:
+      LOAD_EX: "n"
+      EXECUTOR: Sequential
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW_CONN_MYSQL_CONN: mysql://db_mysql:db_mysql@mysql:3306/db_weather
+      AIRFLOW__WEBSERVER__SECRET_KEY: this_is_webserver_secret_key
+      USER_API_WEATHER: "${USER_API_WEATHER}"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./script/entrypoint.sh:/opt/airflow/script/entrypoint.sh
+      - ./requirements.txt:/opt/airflow/requirements.txt
+    networks:
+      - project_network
+
+  postgres:
+    image: postgres:14.0
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    networks:
+      - project_network
+
+  mysql:
+    image: mysql:8.0
+    hostname: mysql
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: 'rootpassword'
+      MYSQL_DATABASE: 'weather_api'
+      MYSQL_USER: 'db_mysql'
+      MYSQL_PASSWORD: 'db_mysql'
+    networks:
+      - project_network
+
+networks:
+  project_network:
+    driver: bridge
