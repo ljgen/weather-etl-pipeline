@@ -2,6 +2,7 @@
 This project is a real-time ETL pipeline that fetches weather data from a weather API, processes the temperature data, and inserts it into a MySQL database using Apache Airflow. The entire environment is containerized using Docker Compose for easy deployment and management.
 
 # Overview
+![](image.jpg)
 The project consists of an ETL pipeline where:
 
 **1. Extract:** Data is fetched from a public weather API (e.g., OpenWeatherMap).
